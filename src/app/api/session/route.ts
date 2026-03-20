@@ -26,20 +26,26 @@ export async function POST() {
         expires_after: { anchor: "created_at", seconds: 600 },
         session: {
           type: "realtime",
-          model: "gpt-realtime",
-          voice: "marin",
+          model: "gpt-realtime-1.5",
           instructions:
             "You are a helpful, concise voice assistant accessed via a walkie talkie app. Keep responses brief and conversational. Be friendly and natural.",
-          turn_detection: {
-            type: "server_vad",
-            threshold: 0.5,
-            prefix_padding_ms: 300,
-            silence_duration_ms: 500,
-            create_response: true,
-            interrupt_response: true,
-          },
-          input_audio_transcription: {
-            model: "gpt-4o-mini-transcribe",
+          audio: {
+            input: {
+              transcription: {
+                model: "gpt-4o-mini-transcribe",
+              },
+              turn_detection: {
+                type: "server_vad",
+                threshold: 0.5,
+                prefix_padding_ms: 300,
+                silence_duration_ms: 500,
+                create_response: true,
+                interrupt_response: true,
+              },
+            },
+            output: {
+              voice: "marin",
+            },
           },
         },
       }),
@@ -56,5 +62,6 @@ export async function POST() {
   }
 
   const data = await response.json();
-  return NextResponse.json(data);
+  // Return the client_secret object directly so the client can access .value
+  return NextResponse.json(data.client_secret ?? data);
 }

@@ -189,17 +189,8 @@ export function useRealtimeSession(): UseRealtimeSessionReturn {
       r.dc = dc;
 
       dc.onopen = () => {
-        // Enable input audio transcription for Phase 2
-        dc.send(
-          JSON.stringify({
-            type: "session.update",
-            session: {
-              input_audio_transcription: {
-                model: "gpt-4o-mini-transcribe",
-              },
-            },
-          })
-        );
+        // Input audio transcription is already configured in the session
+        // via the server-side client_secrets request
       };
 
       dc.onmessage = (e) => {
@@ -224,7 +215,7 @@ export function useRealtimeSession(): UseRealtimeSessionReturn {
 
       // 7. Exchange SDP with OpenAI
       const sdpRes = await fetch(
-        "https://api.openai.com/v1/realtime/calls?model=gpt-realtime",
+        "https://api.openai.com/v1/realtime/calls",
         {
           method: "POST",
           headers: {
