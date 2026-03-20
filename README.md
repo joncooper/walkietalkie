@@ -7,7 +7,7 @@ A full-screen, mobile-first voice chat app that connects you to OpenAI's Realtim
 - **Next.js 16** (App Router, TypeScript)
 - **Tailwind CSS v4**
 - **Clerk** — Google OAuth, single-user allowlist
-- **OpenAI Realtime API** — `gpt-realtime` model via WebRTC
+- **OpenAI Realtime API** — `gpt-realtime-1.5` model via WebRTC
 - **Vercel** — deployment
 
 ## How It Works
@@ -76,6 +76,33 @@ src/
   lib/
     realtime-events.ts      — TypeScript types for Realtime API events
 ```
+
+## Deployment
+
+- **Production URL:** https://walkietalkie-three.vercel.app
+- **Vercel project:** `joncooper-8102s-projects/walkietalkie`
+- **GitHub repo:** https://github.com/joncooper/walkietalkie
+- Deploy via `vercel deploy --prod` or push to `main` (if Git integration is connected)
+- Env vars are configured on Vercel for all environments (production, preview, development)
+- Use `vercel env pull .env.local` to sync env vars locally
+
+## Security
+
+- `OPENAI_API_KEY` is server-side only (no `NEXT_PUBLIC_` prefix), used only in `api/session/route.ts`
+- `CLERK_SECRET_KEY` is server-side only
+- The client never sees the OpenAI API key — it receives a short-lived ephemeral token (`ek_...`) that expires after 600 seconds
+- Auth is enforced in middleware (`proxy.ts`) and double-checked in the session endpoint (email allowlist)
+- `.env*` files are in `.gitignore`
+
+## OpenAI Realtime API Notes
+
+The GA Realtime API (as of March 2026) uses a **nested `audio` object** structure:
+- `session.audio.input.turn_detection` (not `session.turn_detection`)
+- `session.audio.input.transcription` (not `session.input_audio_transcription`)
+- `session.audio.output.voice` (not `session.voice`)
+
+Endpoint: `POST https://api.openai.com/v1/realtime/client_secrets`
+WebRTC: `POST https://api.openai.com/v1/realtime/calls` (no `?model=` needed when using ephemeral keys)
 
 ## Phase 2 (Planned)
 
