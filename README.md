@@ -1,36 +1,82 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Walkie Talkie
 
-## Getting Started
+A full-screen, mobile-first voice chat app that connects you to OpenAI's Realtime API via WebRTC. Dark theme, one big button, natural voice-activity-detected conversation.
 
-First, run the development server:
+## Stack
+
+- **Next.js 16** (App Router, TypeScript)
+- **Tailwind CSS v4**
+- **Clerk** — Google OAuth, single-user allowlist
+- **OpenAI Realtime API** — `gpt-realtime` model via WebRTC
+- **Vercel** — deployment
+
+## How It Works
+
+1. You tap **Connect** — the app mints an ephemeral OpenAI token server-side and establishes a WebRTC peer connection directly between your browser and OpenAI.
+2. Server-side voice activity detection (VAD) handles turn-taking — just talk naturally.
+3. Audio never touches our server. The server only brokers the initial token.
+
+## Setup
+
+### 1. Clerk
+
+1. Create a new app at [dashboard.clerk.com](https://dashboard.clerk.com)
+2. Under **User & Authentication > Social Connections**, enable **Google** only (disable everything else)
+3. Under **Restrictions > Allowlist**, enable it and add `jon.cooper@gmail.com`
+4. Copy your **Publishable Key** and **Secret Key**
+
+### 2. OpenAI
+
+1. Get an API key at [platform.openai.com](https://platform.openai.com) with Realtime API access
+
+### 3. Environment Variables
+
+Create `.env.local`:
+
+```
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
+CLERK_SECRET_KEY=sk_test_...
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+OPENAI_API_KEY=sk-...
+```
+
+### 4. Run Locally
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
+bun install
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 5. Deploy to Vercel
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Import the repo at [vercel.com/new](https://vercel.com/new), add the 4 environment variables above, and deploy. Then add the production domain to Clerk's allowed origins.
 
-## Learn More
+## Project Structure
 
-To learn more about Next.js, take a look at the following resources:
+```
+src/
+  app/
+    layout.tsx              — ClerkProvider, dark theme, viewport meta
+    page.tsx                — Full-screen walkie talkie UI
+    globals.css             — Tailwind v4 theme colors + animations
+    sign-in/[[...sign-in]]/ — Clerk sign-in page
+    api/session/route.ts    — Mints OpenAI ephemeral tokens
+  proxy.ts                  — Clerk auth guard (Next.js 16 proxy convention)
+  hooks/
+    use-realtime-session.ts — WebRTC lifecycle, audio state, reconnection
+    use-audio-visualizer.ts — Canvas circular waveform animation
+    use-wake-lock.ts        — Screen Wake Lock API
+  components/
+    talk-button.tsx         — Large circular connect/disconnect button
+    waveform.tsx            — Circular audio visualization
+    connection-status.tsx   — State label + session timer
+    permission-prompt.tsx   — Pre-mic-permission explanation modal
+  lib/
+    realtime-events.ts      — TypeScript types for Realtime API events
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Phase 2 (Planned)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Bridge to Claude Code via the "channels" beta — talk to Claude Code in real-time through the voice interface. The data channel event handler in `use-realtime-session.ts` is the extension point.
